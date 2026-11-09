@@ -1,7 +1,7 @@
 import cv2 as cv 
 import numpy as np 
 import mediapipe as mp
-
+from feature_extractor import Ear
 import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -69,6 +69,9 @@ class Face_Detector:
                     (0, 255, 0),
                     2
                 )
+                ear = Ear()
+                print(f"Khoảng cách mắt phải : {ear.calculate_ear(face_landmarks,ear.RIGHT_EYE)}")
+                print(f"Khoảng cách mắt trái : {ear.calculate_ear(face_landmarks,ear.LEFT_EYE)}")
 
         else:
             cv.putText(

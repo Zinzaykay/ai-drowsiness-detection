@@ -80,7 +80,7 @@ with face_detector.FaceLandmarker.create_from_options(face_detector.options) as 
             break
 
     cap.release()
-    cv2.destroyAllWindows()
+    cv.destroyAllWindows()
 
 
 
