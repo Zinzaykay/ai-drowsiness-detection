@@ -69,10 +69,6 @@ class Face_Detector:
                     (0, 255, 0),
                     2
                 )
-                ear = Ear()
-                print(f"Khoảng cách mắt phải : {ear.calculate_ear(face_landmarks,ear.RIGHT_EYE)}")
-                print(f"Khoảng cách mắt trái : {ear.calculate_ear(face_landmarks,ear.LEFT_EYE)}")
-
         else:
             cv.putText(
                 frame,
