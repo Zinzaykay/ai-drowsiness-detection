@@ -6,6 +6,7 @@ camera = Camera()
 camera.start()
 while True : 
     frame = camera.get_processed_frame()
+    ear = camera.get_ear()
     cv.imshow("FaceLandmarker",frame)
     if cv.waitKey(1) & 0xFF == 27:
         break

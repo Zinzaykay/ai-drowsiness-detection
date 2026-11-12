@@ -1,6 +1,7 @@
 import cv2 as cv 
 import numpy as np 
 from face_detector import Face_Detector
+from feature_extractor import Ear
 import time
 
 class Camera:
@@ -8,6 +9,7 @@ class Camera:
         self.camera_id = camera_id
         self.cap = None
 
+        self.ear = Ear()
         self.face_detector = Face_Detector()
         self.landmarker = None
 
@@ -99,9 +101,11 @@ class Camera:
         if self.landmarker is not None:
             self.landmarker.close()
 
-    def return_ear(self): 
-        frame = self.get_processed_frame()
-        
+    def get_ear(self): 
+        right_ear = self.ear.calculate_ear(self.face_detector.face_landmarks,self.ear.RIGHT_EYE)
+        left_ear = self.ear.calculate_ear(self.face_detector.face_landmarks,self.ear.LEFT_EYE)
+        return (right_ear+left_ear) / 2
+
 
 
 

@@ -39,7 +39,6 @@ class Face_Detector:
         )
 
     def if_detect_face(self,result,frame):
-
         # Nếu phát hiện khuôn mặt
         if result.face_landmarks:
 
@@ -69,6 +68,7 @@ class Face_Detector:
                     (0, 255, 0),
                     2
                 )
+                self.face_landmarks = face_landmarks
         else:
             cv.putText(
                 frame,

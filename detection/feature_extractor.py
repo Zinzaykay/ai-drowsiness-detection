@@ -56,3 +56,4 @@ class Ear :
         ear_distance = (A + B) / (2.0 * C)
 
         return ear_distance
+
