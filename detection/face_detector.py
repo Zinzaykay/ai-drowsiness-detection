@@ -39,7 +39,6 @@ class Face_Detector:
         )
 
     def if_detect_face(self,result,frame):
-
         # Nếu phát hiện khuôn mặt
         if result.face_landmarks:
 
@@ -69,10 +68,7 @@ class Face_Detector:
                     (0, 255, 0),
                     2
                 )
-                ear = Ear()
-                print(f"Khoảng cách mắt phải : {ear.calculate_ear(face_landmarks,ear.RIGHT_EYE)}")
-                print(f"Khoảng cách mắt trái : {ear.calculate_ear(face_landmarks,ear.LEFT_EYE)}")
-
+                self.face_landmarks = face_landmarks
         else:
             cv.putText(
                 frame,
