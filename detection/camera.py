@@ -1,7 +1,11 @@
 import cv2 as cv 
 import numpy as np 
-from face_detector import Face_Detector
-from feature_extractor import Ear
+try:
+    from detection.face_detector import Face_Detector
+    from detection.feature_extractor import Ear
+except ImportError:
+    from face_detector import Face_Detector
+    from feature_extractor import Ear
 import time
 
 class Camera:
@@ -102,9 +106,11 @@ class Camera:
             self.landmarker.close()
 
     def get_ear(self): 
-        right_ear = self.ear.calculate_ear(self.face_detector.face_landmarks,self.ear.RIGHT_EYE)
-        left_ear = self.ear.calculate_ear(self.face_detector.face_landmarks,self.ear.LEFT_EYE)
-        return (right_ear+left_ear) / 2
+        if self.face_detector.face_landmarks is None:
+            return None
+        right_ear = self.ear.calculate_ear(self.face_detector.face_landmarks, self.ear.RIGHT_EYE)
+        left_ear = self.ear.calculate_ear(self.face_detector.face_landmarks, self.ear.LEFT_EYE)
+        return (right_ear + left_ear) / 2
 
 
 

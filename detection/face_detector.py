@@ -1,7 +1,10 @@
 import cv2 as cv 
 import numpy as np 
 import mediapipe as mp
-from feature_extractor import Ear
+try:
+    from detection.feature_extractor import Ear
+except ImportError:
+    from feature_extractor import Ear
 import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -24,6 +27,7 @@ class Face_Detector:
         running_mode=self.RunningMode.VIDEO,
         num_faces=1
         )
+        self.face_landmarks = None
 
     def convert_brg_to_rgb(self,frame):
         # Chuyển BGR sang RGB
@@ -70,6 +74,7 @@ class Face_Detector:
                 )
                 self.face_landmarks = face_landmarks
         else:
+            self.face_landmarks = None
             cv.putText(
                 frame,
                 "No Face Detected",

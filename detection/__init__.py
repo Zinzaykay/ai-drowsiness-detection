@@ -1,15 +1,13 @@
-from camera import Camera
-import numpy as np 
-import cv2 as cv 
+"""
+Package detection chứa các module xử lý Camera, Face Detection và Feature Extraction.
+"""
 
-camera = Camera()
-camera.start()
-while True : 
-    frame = camera.get_processed_frame()
-    ear = camera.get_ear()
-    cv.imshow("FaceLandmarker",frame)
-    if cv.waitKey(1) & 0xFF == 27:
-        break
-    
-camera.release()
+from .camera import Camera
+from .face_detector import Face_Detector
+from .feature_extractor import Ear
 
+__all__ = [
+    "Camera",
+    "Face_Detector",
+    "Ear",
+]
