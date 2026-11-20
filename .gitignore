@@ -5,6 +5,10 @@ __pycache__/
 
 # C extensions
 *.so
+# videos
+dada/videos/
+*.mp4
+data/annotations/annotations_test.csv
 
 # Distribution / packaging
 .Python
