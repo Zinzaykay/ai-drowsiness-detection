@@ -163,22 +163,28 @@ class CameraWorker:
                 landmarks = self._camera.face_detector.face_landmarks
                 ear_value = self._camera.get_ear()
 
+            # 5. Cập nhật FPS thực tế của pipeline
+            fps_value = self._camera.calculate_fps()
+
             return {
                 "frame": frame,
                 "has_face": has_face,
                 "landmarks": landmarks,
                 "ear": ear_value,
+                "fps": fps_value,
                 "error": None,
             }
 
         except Exception as e:
             # Lỗi xử lý frame đơn lẻ → vẫn trả frame gốc để GUI hiển thị
             print(f"[CameraWorker] Lỗi xử lý frame: {e}")
+            fps_value = self._camera.calculate_fps() if self._camera else 0.0
             return {
                 "frame": frame,
                 "has_face": False,
                 "landmarks": None,
                 "ear": None,
+                "fps": fps_value,
                 "error": None,  # Không lan truyền lỗi frame đơn lẻ
             }
 

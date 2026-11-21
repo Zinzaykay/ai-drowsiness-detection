@@ -197,6 +197,11 @@ class AppController:
         if frame is not None:
             self.gui.update_camera_frame(frame)
 
+        # Cập nhật FPS lên GUI
+        fps = result.get("fps")
+        if fps is not None and hasattr(self.gui, "update_fps"):
+            self.gui.update_fps(fps)
+
         # Cập nhật metrics
         has_face = result.get("has_face", False)
         ear = result.get("ear")

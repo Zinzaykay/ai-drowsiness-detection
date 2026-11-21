@@ -72,30 +72,32 @@ class Camera:
 
         frame = self.process_frame(frame)
 
-        self.calculate_fps(self.frame_count,self.start_time,frame,self.fps)
+        self.calculate_fps(frame)
 
         return frame
 
-
-    def calculate_fps(self,frame_count,start_time,frame,fps):
+    def calculate_fps(self, frame=None):
         # Tính FPS
-        frame_count += 1
-        elapsed = time.time() - start_time
+        self.frame_count += 1
+        elapsed = time.time() - self.start_time
 
-        if elapsed >= 1:
-            fps = frame_count / elapsed
-            frame_count = 0
-            start_time = time.time()
+        if elapsed >= 1.0:
+            self.fps = self.frame_count / elapsed
+            self.frame_count = 0
+            self.start_time = time.time()
 
-        cv.putText(
-            frame,
-            f"FPS: {fps:.1f}",
-            (20, 80),
-            cv.FONT_HERSHEY_SIMPLEX,
-            0.7,
-            (255, 0, 0),
-            2
-        )
+        if frame is not None and isinstance(frame, np.ndarray):
+            cv.putText(
+                frame,
+                f"FPS: {self.fps:.1f}",
+                (20, 80),
+                cv.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 0, 0),
+                2
+            )
+
+        return self.fps
 
     def release(self):
 
