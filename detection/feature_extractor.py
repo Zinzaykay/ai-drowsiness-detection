@@ -27,10 +27,8 @@ class Ear :
         ]
 
     def calculate_ear(self,face_landmarks,RIGHT_OR_LEFT_EYE):
-        ear = Ear()
-
         # Danh sánh lưu tọa độ landmark của mỗi điểm quanh mắt 
-        list_landmark_point_of_eye = ear.get_landmark_points(face_landmarks, RIGHT_OR_LEFT_EYE)
+        list_landmark_point_of_eye = self.get_landmark_points(face_landmarks, RIGHT_OR_LEFT_EYE)
 
         # Tính khoảng cách giữa các điểm landmark
         A = np.linalg.norm(
@@ -58,3 +56,4 @@ class Ear :
         ear_distance = (A + B) / (2.0 * C)
 
         return ear_distance
+

@@ -158,6 +158,7 @@ class CameraView(ctk.CTkFrame):
             text_color=("#6b7280", "#94a3b8")
         )
         self.lbl_cam_meta.pack(side="right")
+        self.video_container.grid_propagate(False)
 
     # ==========================================================================
     # CÁC PHƯƠNG THỨC PUBLIC API CHO GUI / CONTROLLER
@@ -186,6 +187,9 @@ class CameraView(ctk.CTkFrame):
                 text="● ĐANG TẮT",
                 text_color=("#9ca3af", "#6b7280")
             )
+            self.lbl_cam_meta.configure(
+                text=f"Res: {app_config.CAMERA_WIDTH}x{app_config.CAMERA_HEIGHT} | FPS: --"
+            )
             self._render_placeholder()
 
     def update_frame(self, cv_image):
@@ -197,20 +201,26 @@ class CameraView(ctk.CTkFrame):
             return
 
         try:
-            if hasattr(cv_image, "convert"):
-                pil_image = cv_image
+            import cv2
+
+            container_w = self.video_container.winfo_width() - 8
+            container_h = self.video_container.winfo_height() - 8
+
+            if container_w > 50 and container_h > 50:
+                orig_h, orig_w = cv_image.shape[:2]
+                scale = min(container_w / orig_w, container_h / orig_h)
+                new_w = max(1, int(orig_w * scale))
+                new_h = max(1, int(orig_h * scale))
+
+                # Resize bằng OpenCV siêu nhanh
+                resized_bgr = cv2.resize(cv_image, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
+                rgb_image = cv2.cvtColor(resized_bgr, cv2.COLOR_BGR2RGB)
+                pil_image = Image.fromarray(rgb_image)
             else:
-                import cv2
                 rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
                 pil_image = Image.fromarray(rgb_image)
 
-            target_w = self.video_container.winfo_width() - 4
-            target_h = self.video_container.winfo_height() - 4
-
-            if target_w > 50 and target_h > 50:
-                pil_image = pil_image.resize((target_w, target_h), Image.Resampling.BILINEAR)
-
-            ctk_image = ctk.CTkImage(light_image=pil_image, dark_image=pil_image, size=pil_image.size)
+            ctk_image = ctk.CTkImage(light_image=pil_image, dark_image=pil_image, size=(pil_image.width, pil_image.height))
             self._image_reference = ctk_image
             self.video_label.configure(image=ctk_image, text="")
         except Exception as e:

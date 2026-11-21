@@ -52,10 +52,10 @@ APP_TITLE = "AI Driver Drowsiness Detection System"
 APP_SUBTITLE = "Hệ Thống Giám Sát & Cảnh Báo Buồn Ngủ Tài Xế"
 APP_VERSION = "v1.0.0"
 
-WINDOW_WIDTH = 1200
-WINDOW_HEIGHT = 760
-WINDOW_MIN_WIDTH = 1000
-WINDOW_MIN_HEIGHT = 650
+WINDOW_WIDTH = 1280
+WINDOW_HEIGHT = 720
+WINDOW_MIN_WIDTH = 1024
+WINDOW_MIN_HEIGHT = 600
 
 # Giao diện CustomTkinter
 APPEARANCE_MODE = "dark"   # "dark" hoặc "light"

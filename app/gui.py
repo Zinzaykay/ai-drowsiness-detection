@@ -128,8 +128,8 @@ class DrowsinessGUI(ctk.CTk):
         main_frame.grid(row=1, column=0, sticky="nsew", padx=15, pady=10)
 
         # Cột trái (Camera) tỉ trọng 6, Cột phải (Status + History) tỉ trọng 4
-        main_frame.grid_columnconfigure(0, weight=6)
-        main_frame.grid_columnconfigure(1, weight=4)
+        main_frame.grid_columnconfigure(0, weight=6, minsize=500)
+        main_frame.grid_columnconfigure(1, weight=4,  minsize=380)
         main_frame.grid_rowconfigure(0, weight=1)
 
         # ----------------------------------------------------------------------
@@ -213,6 +213,10 @@ class DrowsinessGUI(ctk.CTk):
     def update_camera_frame(self, cv_image):
         """Cập nhật frame hình ảnh lên CameraView."""
         self.camera_view.update_frame(cv_image)
+
+    def update_fps(self, fps: float):
+        """Cập nhật chỉ số FPS lên CameraView."""
+        self.camera_view.set_fps(fps)
 
     def set_camera_state(self, is_running: bool):
         """Cập nhật trạng thái hiển thị của nút và viewport camera."""
