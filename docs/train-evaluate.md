@@ -242,6 +242,8 @@ python -m pytest
 
 > Test dùng dữ liệu giả nhỏ và thư mục tạm `tmp_path`, nên chạy nhanh và không để lại file rác. Test chỉ kiểm tra **hình dạng và hành vi** của code, không kiểm tra độ chính xác của model.
 
+pytest 10 passed; một lần chia theo người, Test acc 0.921, DROWSY precision 0.80, recall 0.935, F1 0.862.
+
 ---
 
 ## 6. Lưu ý và ngoài phạm vi
