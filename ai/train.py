@@ -85,8 +85,9 @@ def main():
 
     print(f"Train acc: {model.score(X_train, y_train):.3f} | "
           f"Test acc: {model.score(X_test, y_test):.3f}")
-    print_report(evaluate_model(model, X_test, y_test))
+    print_report(evaluate_model(model, X_test, y_test, args.threshold))
 
+    model = train_model(X, y)
     saved = save_bundle(model, feature_names, args.window_size, args.threshold, args.out)
     print(f"Đã lưu model vào: {saved}")
 

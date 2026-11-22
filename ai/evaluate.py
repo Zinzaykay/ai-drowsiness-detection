@@ -1,3 +1,4 @@
+import numpy as np
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -8,10 +9,12 @@ from sklearn.metrics import (
 )
 LABEL_NAMES = ["ALERT", "DROWSY"]
 
-def evaluate_model(model, X_test, y_test):
-    """ Đánh giá model trên tập test, trả về dict các chỉ số"""
-    y_pred = model.predict(X_test)
-    cm = confusion_matrix(y_test, y_pred, labels = [0,1])
+def evaluate_model(model, X_test, y_test, threshold=0.5):
+    """Đánh giá model trên tập test, trả về dict các chỉ số"""
+    classes = list(model.classes_)
+    proba = model.predict_proba(X_test)[:, classes.index(1)] if 1 in classes else np.zeros(len(X_test))
+    y_pred = (proba >= threshold).astype(int)
+    cm = confusion_matrix(y_test, y_pred, labels=[0, 1])
     return {
         "accuracy": accuracy_score(y_test, y_pred),
         "precision": precision_score(y_test, y_pred, pos_label = 1, zero_division = 0),
