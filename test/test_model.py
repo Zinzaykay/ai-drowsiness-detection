@@ -35,7 +35,11 @@ def test_reload_gives_same_prediction(tmp_path):
     X, path = _train_and_save(tmp_path)
     p1 = DrowsinessPredictor(path)
     p2 = DrowsinessPredictor(path)
-    assert p1.predict_features(X[5]) == p2.predict_features(X[5])
+    label1, proba1 = p1.predict_features(X[5])
+    label2, proba2 = p2.predict_features(X[5])
+    assert label1 == label2
+    # Xác suất so sánh gần đúng: n_jobs=-1 có thể làm kết quả lệch ở chữ số thập phân cuối
+    assert proba1 == pytest.approx(proba2)
 
 
 def test_wrong_feature_count_raises(tmp_path):

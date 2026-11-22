@@ -225,3 +225,7 @@ __marimo__/
 
 #Scratch
 scratch/
+
+# model đã train
+*.joblib
+ai/model/
