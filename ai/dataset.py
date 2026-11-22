@@ -5,12 +5,18 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import GroupShuffleSplit
 
-# ---- Hằng số ----
+# Hằng số 
 FEATURE_COLUMNS = ["ear", "mar"]
 LABEL_COLUMN = "label"
 META_COLUMNS = ["subject_id", "video_id", "frame_idx"]
 ALL_COLUMNS = META_COLUMNS + FEATURE_COLUMNS + [LABEL_COLUMN]
 VALID_LABELS = {0, 1}
+
+#  data/features/train_features.csv)
+REAL_FEATURE_COLUMNS = ["ear", "mar", "pitch", "yaw", "roll"]
+REAL_CSV_PATH = "data/features/train_features.csv"
+REAL_REQUIRED_COLUMNS = ["video_name", "subject_id", "frame_idx", "face_detected",
+                         *REAL_FEATURE_COLUMNS, LABEL_COLUMN]
 
 
 def generate_synthetic_data(n_subjects: int = 10,
@@ -76,3 +82,37 @@ def split_by_subject(df: pd.DataFrame, test_size: float = 0.25,
     train_idx, test_idx = next(gss.split(df, groups=df["subject_id"]))
     return df.iloc[train_idx].reset_index(drop=True), \
            df.iloc[test_idx].reset_index(drop=True)
+
+def load_real_csv(path: str = REAL_CSV_PATH) -> pd.DataFrame:
+    """Đọc CSV dữ liệu thật của A và đưa về cùng định dạng với dữ liệu giả.
+
+    Cột đầu ra: subject_id, video_id, frame_idx, face_detected, ear, mar,
+    pitch, yaw, roll, label.
+    - video_name (A) -> video_id (bỏ đuôi .mp4).
+    - Khung hình không thấy mặt: tín hiệu = NaN, sau đó nội suy trong từng video
+      (face_detected vẫn giữ nguyên để lọc cửa sổ mất mặt ở make_windows).
+    - roll quanh +-180 độ: dùng % 360 để không bị nhảy từ 179 sang -179.
+    """
+    df = pd.read_csv(path)
+    missing = [c for c in REAL_REQUIRED_COLUMNS if c not in df.columns]
+    if missing:
+        raise ValueError(f"Thiếu cột: {missing}")
+    if not set(df[LABEL_COLUMN].dropna().unique()) <= VALID_LABELS:
+        raise ValueError("Nhãn chỉ được gồm 0 và 1")
+
+    df = df.copy()
+    df["video_id"] = df["video_name"].astype(str).str.replace(".mp4", "", regex=False)
+    df["face_detected"] = df["face_detected"].astype(int)
+    df = df.sort_values(["video_id", "frame_idx"]).reset_index(drop=True)
+
+    cols = REAL_FEATURE_COLUMNS
+    df.loc[df["face_detected"] == 0, cols] = np.nan
+    df["roll"] = df["roll"] % 360.0
+    # lấp khung hình mất mặt bằng nội suy trong từng video
+    df[cols] = df.groupby("video_id")[cols].transform(
+        lambda s: s.interpolate(limit_direction="both"))
+    df[cols] = df[cols].fillna(df[cols].median())   # video mất mặt hoàn toàn (hiếm)
+    df[LABEL_COLUMN] = df[LABEL_COLUMN].astype(int)
+
+    keep = ["subject_id", "video_id", "frame_idx", "face_detected", *cols, LABEL_COLUMN]
+    return df[keep]

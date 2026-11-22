@@ -1,10 +1,4 @@
-# TASK-0YY: Huấn luyện, đánh giá, lưu và dự đoán (Random Forest)
-
-| Mục | Nội dung |
-|---|---|
-| Người làm | C |
-| Reviewer | B |
-| Branch | `feature/TASK-0YY-ai-train-predict` |
+# Huấn luyện, đánh giá, lưu và dự đoán (Random Forest)
 | Phụ thuộc | Task 1A (`ai/dataset.py`, `ai/features.py`) đã merge vào `develop` |
 | Đầu ra chính | `ai/train.py`, `ai/evaluate.py`, `ai/predict.py`, `tests/test_model.py` |
 
@@ -247,19 +241,6 @@ python -m pytest
 | `test_evaluate_returns_expected_keys` | Kết quả đánh giá có đủ các chỉ số. |
 
 > Test dùng dữ liệu giả nhỏ và thư mục tạm `tmp_path`, nên chạy nhanh và không để lại file rác. Test chỉ kiểm tra **hình dạng và hành vi** của code, không kiểm tra độ chính xác của model.
-
----
-
-## 5. Giao diện cho D (`DrowsinessPredictor`)
-
-| | Mô tả |
-|---|---|
-| Khởi tạo | `DrowsinessPredictor(model_path)` |
-| Đầu vào | `predict(window)`: cửa sổ khung hình theo định dạng của 1A. Hoặc `predict_features(features)`: vector đặc trưng đúng thứ tự `feature_names`. |
-| Đầu ra | Tuple `(nhãn, xác suất)` |
-| Nhãn | `0` = ALERT (tỉnh táo), `1` = DROWSY (buồn ngủ) |
-| Xác suất | Số thực trong [0, 1], là xác suất lớp DROWSY |
-| Lỗi | `ValueError` nếu sai số lượng đặc trưng |
 
 ---
 
