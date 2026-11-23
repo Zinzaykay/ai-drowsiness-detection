@@ -110,3 +110,22 @@ def test_compute_event_metrics_values_and_missing_event():
     assert summary.loc["head_nod", "event_detection_rate"] == pytest.approx(0.5)
     assert summary.loc["yawn", "n_windows"] == 0
     assert np.isnan(summary.loc["yawn", "window_recall"])
+
+def test_load_features_csv_accepts_video_name(tmp_path):
+    from ai.analyze_events import load_features_csv
+
+    csv_path = tmp_path / "features.csv"
+    pd.DataFrame(
+        {
+            "subject_id": ["s1", "s1"],
+            "video_name": ["v1.mp4", "v1.mp4"],
+            "frame_idx": [0, 1],
+            "ear": [0.30, 0.28],
+            "mar": [0.10, 0.12],
+            "label": [0, 0],
+        }
+    ).to_csv(csv_path, index=False)
+
+    df = load_features_csv(csv_path)
+    assert "video_id" in df.columns
+    assert list(df["video_id"]) == ["v1.mp4", "v1.mp4"]

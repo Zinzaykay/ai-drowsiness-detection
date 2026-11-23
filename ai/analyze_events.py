@@ -2,7 +2,7 @@
 
 Cách chạy:
     python -m ai.analyze_events
-    python -m ai.analyze_events --threshold 0.45 --window-size 30 --stride 10
+    python -m ai.analyze_events --threshold 0.5 --window-size 30 --stride 10
 """
 
 from __future__ import annotations
@@ -17,13 +17,16 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GroupKFold
 
-from ai.dataset import load_frame_csv
 from ai.features import build_window_features
 
 DEFAULT_EVENTS = ("eye_closed", "head_nod", "yawn")
 
 
-def _resolve_column(df: pd.DataFrame, candidates: Iterable[str], override: str | None = None) -> str:
+def _resolve_column(
+    df: pd.DataFrame,
+    candidates: Iterable[str],
+    override: str | None = None,
+) -> str:
     """Tìm tên cột hợp lệ trong DataFrame từ danh sách ứng viên."""
     if override:
         if override not in df.columns:
@@ -37,8 +40,9 @@ def _resolve_column(df: pd.DataFrame, candidates: Iterable[str], override: str |
         f"Các tên được hỗ trợ: {list(candidates)}"
     )
 
+
 def load_features_csv(path: str | Path) -> pd.DataFrame:
-    """Đọc file features CSV, tự chuẩn hóa cột video_name -> video_id."""
+    """Đọc file features CSV và chuẩn hóa cột video_name -> video_id."""
     df = pd.read_csv(path)
     if "video_id" not in df.columns and "video_name" in df.columns:
         df = df.rename(columns={"video_name": "video_id"})
@@ -61,14 +65,15 @@ def load_annotations_csv(
     end_col: str | None = None,
     fps: float = 30.0,
 ) -> pd.DataFrame:
-    """Đọc file annotations và chuẩn hóa về các cột:
-    [video_id, event_type, start_frame, end_frame, event_id].
-    """
+    """Đọc file annotations và chuẩn hóa về [video_id, event_type, start_frame, end_frame, event_id]."""
     raw = pd.read_csv(path)
-    v_col = _resolve_column(raw, ["video_id","video_name", "video", "clip_id", "filename"], video_col)
-    e_col = _resolve_column(raw, ["event_type", "event", "type", "behavior", "class"], event_col)
+    v_col = _resolve_column(
+        raw, ["video_id", "video_name", "video", "clip_id", "filename"], video_col
+    )
+    e_col = _resolve_column(
+        raw, ["event_type", "behavior", "event", "type", "class"], event_col
+    )
 
-    # Hỗ trợ cả dạng frame (start_frame/end_frame) lẫn dạng giây (start_sec/end_sec)
     if start_col or any(c in raw.columns for c in ["start_frame", "frame_start", "start_idx"]):
         s_col = _resolve_column(raw, ["start_frame", "frame_start", "start_idx"], start_col)
         t_col = _resolve_column(raw, ["end_frame", "frame_end", "end_idx"], end_col)
@@ -93,7 +98,7 @@ def load_annotations_csv(
 
 
 def assign_frame_events(df: pd.DataFrame, annotations: pd.DataFrame) -> pd.DataFrame:
-    """Gán cột `event_type` và `event_id` cho từng khung hình dựa trên khoảng frame."""
+    """Gán cột event_type và event_id cho từng khung hình dựa trên khoảng frame."""
     out = df.copy()
     out["video_id"] = out["video_id"].astype(str)
     out["event_type"] = "normal"
@@ -118,11 +123,7 @@ def build_event_windows(
     ear_threshold: float = 0.2,
     min_event_frames: int = 1,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, pd.DataFrame]:
-    """Cắt cửa sổ trượt theo từng video và lưu metadata sự kiện của từng cửa sổ.
-
-    Một cửa sổ được gán vào loại sự kiện chiếm đa số trong các khung có sự kiện
-    (nếu số khung thuộc sự kiện >= min_event_frames).
-    """
+    """Cắt cửa sổ trượt theo từng video và lưu metadata sự kiện của từng cửa sổ."""
     X_list: list[np.ndarray] = []
     y_list: list[int] = []
     groups_list: list = []
@@ -280,7 +281,7 @@ def plot_event_analysis(summary_df: pd.DataFrame, output_path: str | Path) -> No
     x = np.arange(len(plot_df))
     width = 0.35
 
-    fig, ax = plt.subplots(figsize=(8, 5))
+    fig, ax = plt.subplots(figsize=(8.5, 5.2))
     bars1 = ax.bar(
         x - width / 2,
         plot_df["window_recall"] * 100,
@@ -308,7 +309,6 @@ def plot_event_analysis(summary_df: pd.DataFrame, output_path: str | Path) -> No
     ax.set_ylim(0, 122)
     ax.grid(axis="y", linestyle="--", alpha=0.4)
     ax.legend(loc="upper center", ncol=2, frameon=True)
-    
 
     for bars in (bars1, bars2):
         for bar in bars:
@@ -316,11 +316,12 @@ def plot_event_analysis(summary_df: pd.DataFrame, output_path: str | Path) -> No
             ax.annotate(
                 f"{h:.1f}%",
                 xy=(bar.get_x() + bar.get_width() / 2, h),
-                xytext=(0, 3),
+                xytext=(0, 4),
                 textcoords="offset points",
                 ha="center",
                 va="bottom",
-                fontsize=9,
+                fontsize=9.5,
+                fontweight="bold",
             )
 
     output_path = Path(output_path)
@@ -366,8 +367,7 @@ def main() -> None:
 
     oof_proba = get_oof_probabilities(X, y, groups)
 
-    # Tự động bao gồm 3 sự kiện chính + bất kỳ sự kiện nào khác có trong annotation
-    found_events = [e for e in DEFAULT_EVENTS]
+    found_events = list(DEFAULT_EVENTS)
     for ev in sorted(ann["event_type"].unique()):
         if ev not in found_events:
             found_events.append(ev)
