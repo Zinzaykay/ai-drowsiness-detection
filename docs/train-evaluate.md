@@ -251,3 +251,73 @@ pytest 10 passed; một lần chia theo người, Test acc 0.921, DROWSY precisi
 - Kết quả trên dữ liệu giả **chỉ để kiểm tra pipeline**, không dùng như kết quả hệ thống.
 - Không commit file `.joblib`.
 - Việc **ngoài phạm vi** task này (làm ở task sau): huấn luyện trên dữ liệu thật của A và B; baseline luật EAR để so sánh; chỉnh ngưỡng và tinh chỉnh siêu tham số; tích hợp vào `controller.py` (D làm); review PR của A.
+
+## Phân tích theo loại sự kiện (`eye_closed`, `head_nod`, `yawn`)
+
+Để kiểm chứng khả năng nhận diện của mô hình trên từng biểu hiện buồn ngủ khác nhau, hệ thống chạy đánh giá Out-of-Fold (`GroupKFold` theo `subject_id`, ngưỡng `threshold = 0.5`) bằng script `ai/analyze_events.py`.
+
+| Loại sự kiện | Số cửa sổ (`n_windows`) | Số sự kiện (`n_events`) | Window Recall | Event Detection Rate | Xác suất TB (`mean_proba`) | EAR TB | MAR TB | PERCLOS TB |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| `eye_closed` | 228 | 30 | 61.8% | **100.0%** | 0.567 | 0.183 | 0.012 | 0.585 |
+| `head_nod` | 294 | 46 | **51.4%** | **97.8%** | **0.478** | 0.211 | 0.014 | 0.496 |
+| `yawn` | 398 | 46 | **72.1%** | **100.0%** | **0.651** | 0.234 | 0.456 | 0.267 |
+
+![Phân tích hiệu năng theo loại sự kiện](figures/event_analysis.png)
+
+### Nhận xét & Kiểm chứng giả thuyết `head_nod`
+
+1. **Giả thuyết về `head_nod` được xác nhận rõ ràng:**
+   * `head_nod` có **Window-level Recall thấp nhất (51.4%)**, thấp hơn 10.4 điểm phần trăm so với `eye_closed` (61.8%) và thấp hơn 20.7 điểm phần trăm so với `yawn` (72.1%).
+   * Xác suất dự đoán trung bình của `head_nod` chỉ đạt **0.478** (dưới ngưỡng phân loại 0.5), đồng thời là loại sự kiện duy nhất không đạt 100% ở mức sự kiện (97.8%, bỏ sót 1/46 sự kiện).
+   * **Nguyên nhân kỹ thuật:** Bộ đặc trưng hiện tại chỉ sử dụng thống kê của `EAR`, `MAR` và `PERCLOS`. Trong các cửa sổ `head_nod`, miệng vẫn khép (`mean_mar = 0.014`) và `mean_ear = 0.211` (cao hơn mức `0.183` của `eye_closed` và nằm trên ngưỡng PERCLOS `0.20`), `mean_perclos` chỉ đạt `0.496`. Mô hình chủ yếu nhận diện `head_nod` một cách *gián tiếp* khi người lái đồng thời nhắm mắt hoặc khi đầu cúi xuống làm biến dạng hình chiếu 2D của mắt (perspective foreshortening).
+
+2. **`yawn` đạt hiệu năng cao nhất nhờ tín hiệu `MAR` tách biệt:**
+   * Khi ngáp, `mean_mar` tăng vọt lên **0.456** (so với `0.012`–`0.014` ở hai nhóm còn lại), giúp Random Forest phân tách rất rõ rệt (`Window Recall = 72.1%`, `mean_proba = 0.651`, `Event Detection Rate = 100.0%`).
+
+3. **`eye_closed` ổn định và chênh lệch Window-level vs. Event-level:**
+   * Với `eye_closed`, `mean_ear` giảm sâu xuống **0.183** và `mean_perclos` tăng lên **0.585**, giúp bắt trọn 30/30 sự kiện (`100.0%`).
+   * Tỷ lệ phát hiện ở mức sự kiện (`97.8%–100.0%`) cao hơn hẳn mức cửa sổ (`51.4%–72.1%`) do các cửa sổ rìa (đầu/cuối sự kiện) chỉ chứa một phần hành vi buồn ngủ. Trong vận hành thực tế, chỉ cần bắt trúng ít nhất 1 cửa sổ trong chu kỳ là hệ thống đã kích hoạt được cảnh báo, nhưng Recall mức cửa sổ thấp ở `head_nod` sẽ làm tăng độ trễ cảnh báo.
+
+4. **Hướng cải tiến có cơ sở định lượng:**
+   * Tập dữ liệu `train_features.csv` hiện đã trích xuất sẵn các góc tư thế đầu (Head Pose như `yaw`, `roll`, `pitch`). Bổ sung đặc trưng thống kê của góc cúi đầu (`pitch`) và tốc độ biến thiên góc đầu vào `build_window_features` là bước nâng cấp trực tiếp và hiệu quả nhất để cải thiện Recall cho `head_nod`.
+
+
+---
+
+## Phân tích hiệu năng theo loại sự kiện (`eye_closed`, `head_nod`, `yawn`)
+
+### Mục tiêu & Phương pháp
+Để đánh giá sâu hơn điểm mạnh/điểm yếu của mô hình Random Forest ngoài các chỉ số tổng hợp (F1, Precision, Recall), hệ thống thực hiện phân tích lỗi theo từng nhóm hành vi buồn ngủ trong `data/annotations/annotations_train.csv` bằng script `ai/analyze_events.py`.
+
+* **Giao thức đánh giá:** Out-of-Fold (OOF) sử dụng `GroupKFold` chia theo `subject_id` để đảm bảo không rò rỉ dữ liệu giữa tập huấn luyện và tập kiểm thử.
+* **Cấu hình cửa sổ:** `window_size = 30`, `stride = 10`, `ear_threshold = 0.20`, ngưỡng phân loại `threshold = 0.50`.
+* **Hai mức độ đo lường:**
+  * **Window-level Recall:** Tỷ lệ cửa sổ thuộc sự kiện được mô hình dự đoán là buồn ngủ (`label = 1`).
+  * **Event-level Detection Rate:** Tỷ lệ sự kiện thực tế được phát hiện thành công ở ít nhất 1 cửa sổ trong suốt thời gian diễn ra sự kiện đó.
+
+### Kết quả thực nghiệm
+
+| Loại sự kiện | Số cửa sổ (`n_windows`) | Số sự kiện (`n_events`) | Window Recall | Event Detection Rate | Xác suất TB (`mean_proba`) | EAR TB | MAR TB | PERCLOS TB |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| `eye_closed` | 228 | 30 | 61.8% | **100.0%** | 0.567 | 0.183 | 0.012 | 0.585 |
+| `head_nod` | 294 | 46 | **51.4%** | **97.8%** | **0.478** | 0.211 | 0.014 | 0.496 |
+| `yawn` | 398 | 46 | **72.1%** | **100.0%** | **0.651** | 0.234 | 0.456 | 0.267 |
+
+![Phân tích hiệu năng theo loại sự kiện](figures/event_analysis.png)
+
+### Nhận xét & Kiểm chứng giả thuyết `head_nod`
+
+> [!WARNING]
+> **Xác nhận giả thuyết về `head_nod`:** Đây là nhóm hành vi khó nhận diện nhất của mô hình hiện tại với **Window Recall thấp nhất (51.4%)**, xác suất dự đoán trung bình chỉ đạt **0.478** (dưới ngưỡng 0.5) và là nhóm duy nhất bị bỏ sót trọn vẹn một sự kiện (45/46 sự kiện, tương ứng **97.8%**).
+
+1. **Nguyên nhân kỹ thuật ở `head_nod`:**
+   * Bộ đặc trưng cửa sổ hiện tại (`9` chiều) chỉ dựa trên thống kê của `EAR`, `MAR` và `PERCLOS`.
+   * Trong các cửa sổ `head_nod`, miệng vẫn khép (`MAR TB = 0.014`), `EAR TB = 0.211` (cao hơn mức `0.183` của `eye_closed` và nằm trên ngưỡng `0.20`), `PERCLOS TB = 0.496`.
+   * Do không có đặc trưng tư thế đầu, mô hình chỉ phát hiện `head_nod` một cách *gián tiếp* khi người lái đồng thời nhắm mắt hoặc khi góc cúi đầu làm biến dạng phép chiếu 2D của vùng mắt (perspective foreshortening).
+2. **`yawn` đạt hiệu năng cao nhất:**
+   * Hành vi ngáp tạo ra tín hiệu tách biệt rất mạnh trên trục `MAR` (`MAR TB = 0.456`, cao gấp hơn 30 lần so với `0.012`–`0.014` ở hai nhóm còn lại), giúp mô hình đạt **Window Recall 72.1%**, `mean_proba = 0.651` và bắt trọn **100.0%** (46/46) sự kiện.
+3. **`eye_closed` ổn định và ý nghĩa của Event-level Detection Rate:**
+   * Nhóm `eye_closed` có `EAR TB = 0.183` thấp nhất và `PERCLOS TB = 0.585` cao nhất, đạt **100.0%** (30/30) tỷ lệ phát hiện ở mức sự kiện.
+   * Tỷ lệ phát hiện mức sự kiện (`97.8%`–`100.0%`) cao hơn rõ rệt so với mức cửa sổ (`51.4%`–`72.1%`) vì các cửa sổ ở rìa (đầu/cuối) chỉ chứa một phần nhỏ hành vi buồn ngủ. Tuy vậy, Window Recall thấp ở `head_nod` đồng nghĩa độ trễ cảnh báo trên nhóm hành vi này sẽ lớn hơn.
+4. **Hướng cải tiến có cơ sở định lượng:**
+   * Tập dữ liệu `train_features.csv` đã lưu sẵn các góc đầu (`yaw`, `roll`, ...). Bổ sung thống kê góc cúi đầu (`pitch`) và tốc độ thay đổi góc đầu vào `build_window_features` là hướng nâng cấp trực tiếp để tăng Window Recall cho `head_nod`.

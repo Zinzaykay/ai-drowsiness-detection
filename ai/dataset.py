@@ -65,6 +65,8 @@ def generate_synthetic_data(n_subjects: int = 10,
 def load_frame_csv(path: str) -> pd.DataFrame:
     """Đọc CSV và kiểm tra: đủ cột, nhãn chỉ 0/1, không thiếu giá trị."""
     df = pd.read_csv(path)
+    if "video_id" not in df.columns and "video_name" in df.columns:
+        df = df.rename(columns={"video_name": "video_id"})
     missing = [c for c in ALL_COLUMNS if c not in df.columns]
     if missing:
         raise ValueError(f"Thiếu cột: {missing}")
