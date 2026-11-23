@@ -6,6 +6,7 @@ try:
 except ImportError:
     from face_detector import Face_Detector
     from feature_extractor import Ear
+    from feature_extractor import Mar
 import time
 
 class Camera:
@@ -14,6 +15,7 @@ class Camera:
         self.cap = None
 
         self.ear = Ear()
+        self.mar = Mar()
         self.face_detector = Face_Detector()
         self.landmarker = None
 
@@ -111,6 +113,12 @@ class Camera:
         right_ear = self.ear.calculate_ear(self.face_detector.face_landmarks, self.ear.RIGHT_EYE)
         left_ear = self.ear.calculate_ear(self.face_detector.face_landmarks, self.ear.LEFT_EYE)
         return (right_ear + left_ear) / 2
+
+    def get_mar(self):
+        if self.face_detector.face_landmarks is None:
+            return None
+        mar = self.mar.calculate_mar(self.face_detector.face_landmarks)
+        return mar 
 
 
 
