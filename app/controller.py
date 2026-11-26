@@ -10,6 +10,7 @@ from typing import Optional
 
 from app import app_config
 from app.workers.camera_worker import CameraWorker
+from alert.alert_manager import AlertManager
 
 
 class AppController:
@@ -44,7 +45,9 @@ class AppController:
 
         # Tham chiếu tới các module sẽ tích hợp ở các giai đoạn tiếp theo
         self.drowsiness_classifier = None
-        self.alert_manager = None
+
+        # Khởi tạo AlertManager để quản lý âm thanh cảnh báo
+        self.alert_manager = AlertManager()
 
     def set_gui(self, gui):
         """Gán đối tượng GUI cho controller."""
@@ -295,6 +298,7 @@ class AppController:
         """
         Hàm hỗ trợ kiểm thử giao diện (Demo Mode):
         Mô phỏng thay đổi giữa các trạng thái ALERT, WARNING, DROWSY kèm các chỉ số mẫu.
+        Đồng thời phát âm thanh kiểm thử qua AlertManager (bỏ qua cooldown).
         """
         status_level = status_level.upper()
 
@@ -323,6 +327,10 @@ class AppController:
                 mar=0.78,
             )
 
+        # Phát âm thanh kiểm thử (bỏ qua cooldown)
+        if self.alert_manager:
+            self.alert_manager.test_play(status_level)
+
         if self.gui:
             self.gui.set_footer_status(f"● Chế độ Test Demo: Đã chuyển sang trạng thái {status_level}")
 
@@ -339,12 +347,17 @@ class AppController:
         """
         Xử lý dọn dẹp khi người dùng đóng ứng dụng:
         1. Dừng camera worker và giải phóng tài nguyên.
-        2. Hủy các callback after() đang chờ.
-        3. Đóng GUI an toàn.
+        2. Dừng âm thanh và giải phóng tài nguyên âm thanh.
+        3. Hủy các callback after() đang chờ.
+        4. Đóng GUI an toàn.
         """
         # Dừng camera (bao gồm hủy polling + giải phóng worker)
         if self.is_camera_running:
             self.stop_camera()
+
+        # Dừng âm thanh và giải phóng tài nguyên
+        if self.alert_manager:
+            self.alert_manager.cleanup()
 
         # Đóng GUI
         if self.gui:

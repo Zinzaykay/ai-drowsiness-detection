@@ -3,6 +3,7 @@ import numpy as np
 try:
     from detection.face_detector import Face_Detector
     from detection.feature_extractor import Ear
+    from detection.feature_extractor import Mar
 except ImportError:
     from face_detector import Face_Detector
     from feature_extractor import Ear

@@ -22,6 +22,10 @@ DROWSINESS_MODEL_PATH = MODELS_DIR / "drowsiness_detector.pkl"
 SHAPE_PREDICTOR_PATH = MODELS_DIR / "shape_predictor_68_face_landmarks.dat"
 ALERT_SOUND_PATH = SOUND_DIR / "alarm.wav"
 
+# Đường dẫn file âm thanh cho từng trạng thái cảnh báo
+WARNING_SOUND_PATH = SOUND_DIR / "Alarm Sound Effect.mp3"
+DROWSY_SOUND_PATH = SOUND_DIR / "Nhạc báo thức dậy đi ông cháu ơi.mp3"
+
 # ==============================================================================
 # 2. CẤU HÌNH CAMERA (CAMERA SETTINGS)
 # ==============================================================================

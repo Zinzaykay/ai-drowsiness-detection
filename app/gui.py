@@ -184,7 +184,6 @@ class DrowsinessGUI(ctk.CTk):
 
         # Thêm 2 bản ghi log ban đầu tượng trưng
         self.history_panel.add_log("ALERT", "Hệ thống AI đã khởi tạo thành công. Sẵn sàng giám sát.")
-        self.history_panel.add_log("WARNING", "Phát hiện chớp mắt dài hơn bình thường (EAR = 0.23).")
 
     def _create_footer(self):
         """Tạo thanh thông báo trạng thái dưới cùng."""
